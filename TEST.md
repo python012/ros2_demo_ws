@@ -202,7 +202,51 @@ source install/setup.bash
 colcon build --packages-select simple_ros_demo
 ```
 
-### 问题2: 频率测试失败
+### 问题2: 节点退出码测试失败
+**现象**:
+```
+FAIL: test_exit_codes (simple_ros_demo.TestPublisherProcessExit)
+AssertionError: Proc sim_velocity_publisher.py-1 exited with code -2
+```
+
+**原因**: 节点没有正确处理 SIGINT 信号（测试结束时发送），导致 KeyboardInterrupt 异常未被捕获，退出码为 -2 而不是期望的 0。
+
+**解决**:
+已在代码中修复。所有节点的 `main()` 函数现在使用 try-except-finally 结构：
+
+```python
+def main(args=None):
+    rclpy.init(args=args)
+    node = MyNode()
+    
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass  # 捕获 Ctrl+C 或 SIGINT 信号
+    finally:
+        node.destroy_node()  # 清理节点资源
+        if rclpy.ok():
+            rclpy.shutdown()
+```
+
+**重要提示**: 
+如果你在 Ubuntu 环境仍然看到 `-2` 退出码错误，说明修改后的代码还没有同步过去。请确保：
+1. 将修改后的三个节点文件同步到 Ubuntu 环境：
+   - `simple_ros_demo/sim_velocity_publisher.py`
+   - `simple_ros_demo/velocity_subscriber.py`
+   - `simple_ros_demo/speed_service_server.py`
+2. 将修改后的测试文件同步：
+   - `test/test_publisher_rate_launch.py`
+
+**验证**:
+重新构建并测试：
+```bash
+colcon build --packages-select simple_ros_demo
+source install/setup.bash
+colcon test --packages-select simple_ros_demo
+```
+
+### 问题3: 频率测试失败
 **现象**:
 ```
 AssertionError: Publisher rate too low: measured=7.8Hz, expected >= 8.0Hz
@@ -224,7 +268,7 @@ AssertionError: Publisher rate too low: measured=7.8Hz, expected >= 8.0Hz
    - 增加虚拟机 CPU 核心数/内存分配
    - 在物理机上运行测试
 
-### 问题3: 样本收集超时
+### 问题4: 样本收集超时
 **现象**:
 ```
 AssertionError: Insufficient samples from /cmd_vel: got 18
@@ -242,7 +286,39 @@ ros2 topic list | grep cmd_vel
 ros2 topic hz /cmd_vel
 ```
 
-### 问题4: 查看完整测试日志
+### 问题5: 版权和代码风格检查失败
+**现象**:
+```
+copyright: could not find copyright notice
+flake8: E501 line too long (80 > 79 characters)
+pep257: D400 First line should end with a period (not '次')
+pep257: D415 First line should end with a period, question mark, or exclamation point
+```
+
+**原因**:
+- 源文件缺少版权声明头
+- 代码不符合 PEP 8 规范（行尾空格、行过长等）
+- **Docstring 中文问题**：PEP 257 要求 docstring 第一行必须以英文句号、问号或感叹号结尾，但中文注释不符合此规范
+
+**解决**:
+已在所有节点文件中添加标准 Apache 2.0 版权声明，并修复代码风格问题。测试文件的 docstring 已改为英文第一行 + 中文说明的格式，既符合规范又保留教学价值。
+
+如果仍有问题，手动检查：
+
+```bash
+# 检查版权
+ament_copyright src/simple_ros_demo/simple_ros_demo/*.py
+
+# 检查代码风格
+ament_flake8 src/simple_ros_demo/simple_ros_demo/*.py
+
+# 检查 docstring
+ament_pep257 src/simple_ros_demo/test/*.py
+```
+
+**提示**: 如果要完全禁用这些 linter 检查（不推荐），可以在 `package.xml` 中移除对应的 `<test_depend>` 依赖。
+
+### 问题6: 查看完整测试日志
 ```bash
 # 方法1: 查看 XML 测试报告
 cat build/simple_ros_demo/test_results/simple_ros_demo/test_publisher_rate_launch.py.xunit.xml
