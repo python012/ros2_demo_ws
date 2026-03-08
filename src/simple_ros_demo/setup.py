@@ -9,11 +9,9 @@ setup(
     version='0.0.0',
     packages=find_packages(exclude=['test']),
     data_files=[
-        ('share/ament_index/resource_index/packages',
-            ['resource/' + package_name]),
+        ('share/ament_index/resource_index/packages', ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
-        # srv 文件安装（关键路径）
-        (os.path.join('share', package_name, 'srv'), glob('simple_ros_demo/srv/*.srv')),
+        (os.path.join('share', package_name, 'srv'), glob(os.path.join('simple_ros_demo', 'srv', '*.srv'))),
     ],
     install_requires=['setuptools'],
     zip_safe=True,

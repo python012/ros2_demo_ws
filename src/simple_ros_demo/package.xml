@@ -6,7 +6,7 @@
   <maintainer email="reed@email.com">Reed</maintainer>
   <license>Apache-2.0</license>
 
-  <buildtool_depend>ament_python</buildtool_depend>
+  <buildtool_depend>ament_cmake</buildtool_depend>
 
   <depend>rclpy</depend>
   <depend>geometry_msgs</depend>
@@ -21,7 +21,7 @@
   <test_depend>ament_lint_common</test_depend>
 
   <export>
-    <build_type>ament_python</build_type>
-    <rosidl_generate_interfaces>simple_ros_demo</rosidl_generate_interfaces>
+    <build_type>ament_cmake</build_type>
+    <!-- <rosidl_generate_interfaces>simple_ros_demo</rosidl_generate_interfaces> -->
   </export>
 </package>
