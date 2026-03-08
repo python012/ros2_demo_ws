@@ -1,0 +1,5 @@
+float64 target_linear   # 请求：目标线性速度
+float64 target_angular  # 请求：目标角速度
+---
+bool success            # 响应：是否设置成功
+string message          # 响应：说明文字（如 "OK" 或 "速度超出范围"）

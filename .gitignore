@@ -1,0 +1,24 @@
+# ROS2 编译生成目录（必须忽略）
+build/
+install/
+log/
+
+# Python 缓存
+__pycache__/
+*.py[cod]
+*.class
+*.so
+
+# 编辑器文件
+.DS_Store
+*.swp
+*.bak
+.vscode/
+.idea/
+
+# 常见大文件类型（防止误传数据集或包）
+*.bag
+*.mcap
+*.db
+
+.vscode/
