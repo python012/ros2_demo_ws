@@ -104,7 +104,7 @@ class TestSpeedService(unittest.TestCase):
         """
         # 延迟导入：避免在 pytest 收集阶段导入未生成的接口
         from simple_ros_demo.srv import SetSpeed
-        
+
         node = rclpy.create_node('set_speed_test_client')
         try:
             client = node.create_client(SetSpeed, 'set_speed')
