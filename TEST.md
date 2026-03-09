@@ -2,7 +2,28 @@
 
 ## 测试概述
 
-本项目使用 **launch_testing + pytest** 框架对 ROS2 节点进行集成测试。当前实现了对 `sim_velocity_publisher.py` 发布者节点的频率校验测试。
+本项目使用 **launch_testing + pytest** 框架对 ROS2 节点进行集成测试，覆盖 Publisher 频率、消息值域、Service 响应，以及节点生命周期等场景。
+
+## 测试覆盖场景一览
+
+| 测试文件 | 测试用例 | 测试内容 | 覆盖场景 |
+|---------|---------|---------|---------|
+| `test_publisher_rate_launch.py` | `test_cmd_vel_publish_rate_is_near_10hz` | 订阅 `/cmd_vel`，收集 35 个样本，计算平均发布频率，断言在 8-12Hz 范围内 | ✅ Topic 通信测试（频率） |
+| `test_publisher_rate_launch.py` | `test_cmd_vel_publish_rate_is_near_10hz` | 同时校验每个 Twist 消息的 `linear.x` 和 `angular.z` 值域（≤2.0 和 ≤1.0） | ✅ 消息内容测试（值域） |
+| `test_publisher_rate_launch.py` | `test_exit_codes` | 验证 Publisher 节点关闭后退出码为 0 | ✅ 节点生命周期（Publisher） |
+| `test_speed_service_launch.py` | `test_set_speed_service_responses` | 调用 `/set_speed` 服务测试合法/非法输入的响应 | ✅ Service 调用测试 |
+| `test_speed_service_launch.py` | `test_exit_codes` | 验证 Service 节点关闭后退出码为 0 | ✅ 节点生命周期（Service） |
+| `test_subscriber_lifecycle_launch.py` | `test_subscriber_runs` | 启动 Subscriber 节点并保持运行 2 秒 | ✅ 节点生命周期（Subscriber） |
+| `test_subscriber_lifecycle_launch.py` | `test_exit_codes` | 验证 Subscriber 节点关闭后退出码为 0 | ✅ 节点生命周期（Subscriber） |
+| `test_flake8.py` | `test_flake8` | 检查源码 PEP 8 代码风格规范 | 代码质量保证 |
+| `test_pep257.py` | `test_pep257` | 检查 docstring 是否符合 PEP 257 规范 | 代码质量保证 |
+| `test_copyright.py` | `test_copyright` | 检查源码是否包含 Apache 2.0 版权头 | 代码质量保证 |
+
+**覆盖场景总结**：
+- ✅ **Topic 通信测试**：Publisher 频率校验（10Hz ± 2Hz）
+- ✅ **消息内容测试**：Twist 字段值域校验（linear ≤ 2.0, angular ≤ 1.0）
+- ✅ **Service 调用测试**：SetSpeed 正常/异常输入响应
+- ✅ **节点生命周期测试**：Publisher/Service/Subscriber 启动运行与退出码校验
 
 ## 测试依赖检查与安装
 

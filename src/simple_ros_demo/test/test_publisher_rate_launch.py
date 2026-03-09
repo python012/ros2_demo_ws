@@ -39,6 +39,8 @@ MIN_RATE_HZ = TARGET_RATE_HZ - RATE_TOLERANCE_HZ
 MAX_RATE_HZ = TARGET_RATE_HZ + RATE_TOLERANCE_HZ
 SAMPLES_TO_COLLECT = 35
 WARMUP_INTERVALS_TO_DROP = 5
+LINEAR_MAX_ABS = 2.0
+ANGULAR_MAX_ABS = 1.0
 
 
 @pytest.mark.launch_test
@@ -79,6 +81,7 @@ class _RateProbe(Node):
     def __init__(self):
         super().__init__('cmd_vel_rate_probe')
         self.timestamps = []
+        self.samples = []
         self.subscription = self.create_subscription(
             Twist,
             '/cmd_vel',
@@ -86,13 +89,14 @@ class _RateProbe(Node):
             10,
         )
 
-    def _callback(self, _msg):
+    def _callback(self, msg):
         """
         Record timestamp when a message is received.
 
         使用 monotonic 时钟，避免系统时间跳变影响统计结果。
         """
         self.timestamps.append(time.monotonic())
+        self.samples.append((msg.linear.x, msg.angular.z))
 
 
 class TestPublisherRate(unittest.TestCase):
@@ -144,6 +148,18 @@ class TestPublisherRate(unittest.TestCase):
             probe.timestamps[i + 1] - probe.timestamps[i]
             for i in range(len(probe.timestamps) - 1)
         ]
+
+        for linear, angular in probe.samples:
+            self.assertLessEqual(
+                abs(linear),
+                LINEAR_MAX_ABS,
+                f'线速度超出范围：linear={linear}, limit={LINEAR_MAX_ABS}',
+            )
+            self.assertLessEqual(
+                abs(angular),
+                ANGULAR_MAX_ABS,
+                f'角速度超出范围：angular={angular}, limit={ANGULAR_MAX_ABS}',
+            )
 
         stable_intervals = intervals[WARMUP_INTERVALS_TO_DROP:]
 

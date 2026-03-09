@@ -41,6 +41,8 @@ if(BUILD_TESTING)
 
   find_package(launch_testing_ament_cmake REQUIRED)
   add_launch_test(test/test_publisher_rate_launch.py TIMEOUT 40)
+  add_launch_test(test/test_speed_service_launch.py TIMEOUT 40)
+  add_launch_test(test/test_subscriber_lifecycle_launch.py TIMEOUT 40)
 endif()
 
 ament_package()
