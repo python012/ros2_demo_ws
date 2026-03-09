@@ -7,7 +7,6 @@ endif()
 
 # 查找依赖
 find_package(ament_cmake REQUIRED)
-find_package(ament_cmake_python REQUIRED)
 find_package(rclpy REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
@@ -18,9 +17,6 @@ rosidl_generate_interfaces(${PROJECT_NAME}
   "simple_ros_demo/srv/SetSpeed.srv"
   DEPENDENCIES geometry_msgs std_srvs
 )
-
-# 安装 Python 包
-ament_python_install_package(simple_ros_demo)
 
 # 安装 Python 脚本
 install(PROGRAMS
