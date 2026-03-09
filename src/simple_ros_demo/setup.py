@@ -11,7 +11,10 @@ setup(
     data_files=[
         ('share/ament_index/resource_index/packages', ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
-        (os.path.join('share', package_name, 'srv'), glob(os.path.join('simple_ros_demo', 'srv', '*.srv'))),
+        (
+            os.path.join('share', package_name, 'srv'),
+            glob(os.path.join('simple_ros_demo', 'srv', '*.srv')),
+        ),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
