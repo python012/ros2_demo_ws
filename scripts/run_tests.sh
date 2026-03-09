@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -eo pipefail
 
 workspace_dir="${1:-$HOME/ros2_demo_ws}"
 
@@ -12,6 +12,7 @@ cd "$workspace_dir"
 
 if [[ -f /opt/ros/humble/setup.bash ]]; then
   # Ensure ROS2 environment is available for build and tests.
+  # Note: Do not use 'set -u' as ROS2 setup scripts may reference undefined variables
   source /opt/ros/humble/setup.bash
 fi
 
