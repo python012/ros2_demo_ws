@@ -33,8 +33,11 @@ install(DIRECTORY
 )
 
 if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies()
+  # Use manual pytest tests instead of ament_lint_auto to control linter scope
+  find_package(ament_cmake_pytest REQUIRED)
+  ament_add_pytest_test(linter_tests test
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+  )
 
   find_package(launch_testing_ament_cmake REQUIRED)
   add_launch_test(test/test_publisher_rate_launch.py TIMEOUT 40)
