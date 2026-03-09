@@ -28,7 +28,6 @@ import launch_testing.actions
 import launch_testing.asserts
 import pytest
 import rclpy
-from simple_ros_demo.srv import SetSpeed
 
 SERVICE_TIMEOUT_SEC = 5.0
 CALL_TIMEOUT_SEC = 3.0
@@ -87,7 +86,7 @@ class TestSpeedService(unittest.TestCase):
                 return
         self.fail('等待 /set_speed 服务超时')
 
-    def _call_service(self, node, client, linear, angular):
+    def _call_service(self, node, client, linear, angular, SetSpeed):
         request = SetSpeed.Request()
         request.target_linear = float(linear)
         request.target_angular = float(angular)
@@ -103,16 +102,19 @@ class TestSpeedService(unittest.TestCase):
 
         输入合法速度应成功，超范围应失败。
         """
+        # 延迟导入：避免在 pytest 收集阶段导入未生成的接口
+        from simple_ros_demo.srv import SetSpeed
+        
         node = rclpy.create_node('set_speed_test_client')
         try:
             client = node.create_client(SetSpeed, 'set_speed')
             self._wait_for_service(client)
 
-            ok_response = self._call_service(node, client, 1.0, 0.5)
+            ok_response = self._call_service(node, client, 1.0, 0.5, SetSpeed)
             self.assertTrue(ok_response.success, '合法输入应返回 success=True')
             self.assertIn('Success', ok_response.message)
 
-            bad_response = self._call_service(node, client, 3.0, 2.0)
+            bad_response = self._call_service(node, client, 3.0, 2.0, SetSpeed)
             self.assertFalse(bad_response.success, '非法输入应返回 success=False')
             self.assertIn('Failed', bad_response.message)
         finally:

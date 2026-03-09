@@ -45,4 +45,7 @@ if(BUILD_TESTING)
   add_launch_test(test/test_subscriber_lifecycle_launch.py TIMEOUT 40)
 endif()
 
+# 导出依赖，使 Python 代码可以访问生成的接口
+ament_export_dependencies(rosidl_default_runtime)
+
 ament_package()
