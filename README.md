@@ -2,12 +2,15 @@
 
 一个简洁的 ROS2 Humble 入门级 Demo 项目，使用 Python (rclpy) 实现，展示了 ROS2 的核心通信机制：**发布-订阅模式**和**服务调用模式**。
 
-## 项目概述
+## 运行环境
 
+- **操作系统**: Ubuntu 22.04 (Jammy Jellyfish)
 - **ROS2 发行版**: Humble Hawksbill
 - **编程语言**: Python 3.10
 - **构建系统**: ament_cmake + setuptools (混合)
 - **许可证**: Apache-2.0
+
+> **注意**: 本项目依赖 ROS2 Humble，需先安装 ROS2 环境。推荐安装 `ros-humble-desktop-full` 以获取完整依赖。
 
 ### 核心功能
 
