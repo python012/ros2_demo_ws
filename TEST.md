@@ -131,6 +131,15 @@ WARMUP_INTERVALS_TO_DROP = 5   # 丢弃预热样本数
 
 在 **ROS2 Humble 环境**（Ubuntu 22.04）执行以下命令：
 
+### 快捷方式（推荐）
+
+```bash
+# 使用项目提供的测试脚本，自动完成清理、构建、测试全流程
+./scripts/run_tests.sh
+```
+
+### 手动执行
+
 ```bash
 # 1. 进入工作空间根目录
 cd ~/ros2_demo_ws  # 或你的实际路径 /Users/Reed/dev/ros2_demo_ws
@@ -351,6 +360,79 @@ colcon test-result --all --verbose
 cat log/latest_test/simple_ros_demo/stdout_stderr.log
 ```
 
+### 问题7: Python 模块搜索路径冲突导致 ImportError
+**现象**:
+```
+ImportError: cannot import name 'SetSpeed' from 'simple_ros_demo.srv' (unknown location)
+```
+
+**原因**: 
+- pytest 从源码目录 `src/simple_ros_demo/test/` 运行
+- Python 的 `sys.path` 首先包含空字符串 `''`（当前目录），即源码目录
+- Python 找到源码中的 `simple_ros_demo` 包，但该包只有手动编写的 Python 文件，缺少生成的 `srv` 模块
+- 生成的 Python 接口代码位于 `install/simple_ros_demo/local/lib/python3.10/dist-packages/simple_ros_demo/srv/`
+
+**解决**:
+
+1. **CMakeLists.txt 中安装生成的 Python 接口**：
+```cmake
+# 生成接口
+rosidl_generate_interfaces(${PROJECT_NAME}
+  "simple_ros_demo/srv/SetSpeed.srv"
+  DEPENDENCIES geometry_msgs std_srvs
+)
+
+# 安装生成的 Python 接口到 lib 目录
+install(DIRECTORY
+  ${CMAKE_BINARY_DIR}/rosidl_generator_py/${PROJECT_NAME}/srv
+  DESTINATION lib/${PROJECT_NAME}
+)
+```
+
+2. **测试文件中修复 sys.path**：
+在测试文件开头（所有 import 之前）添加路径修复逻辑：
+```python
+import os
+import sys
+
+# 移除可能遮盖安装包的源码路径
+_this_dir = os.path.dirname(os.path.abspath(__file__))
+_pkg_dir = os.path.dirname(os.path.dirname(_this_dir))
+_workspace_dir = os.path.dirname(_pkg_dir)
+
+_filtered_path = []
+for p in sys.path:
+    if p in ('', _pkg_dir, _workspace_dir):
+        continue
+    _filtered_path.append(p)
+
+# 预置安装包位置
+_install_base = None
+for p in _filtered_path:
+    if '/local/lib/python' in p and 'dist-packages' in p:
+        _install_base = p
+        break
+
+if _install_base:
+    _installed_pkg = os.path.join(_install_base, 'simple_ros_demo')
+    if os.path.isdir(_installed_pkg):
+        _filtered_path.insert(0, _installed_pkg)
+
+sys.path = _filtered_path
+```
+
+**调试技巧**：
+```python
+import simple_ros_demo
+print(f"simple_ros_demo.__path__ = {simple_ros_demo.__path__}")
+import sys
+print(f"sys.path[:3] = {sys.path[:3]}")
+```
+
+**教训**：
+- ROS2 混合构建项目（ament_cmake + setuptools）中，生成的 Python 接口需要显式安装
+- 测试代码从源码目录运行时，需要注意模块搜索路径优先级
+
 ## 扩展测试用例（未来可添加）
 
 ### 1. Subscriber 节点测试
@@ -374,21 +456,30 @@ cat log/latest_test/simple_ros_demo/stdout_stderr.log
 ### CMakeLists.txt 相关配置
 ```cmake
 if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  ament_lint_auto_find_test_dependencies()
+  # 使用手动 pytest 测试而非 ament_lint_auto，便于控制 linter 范围
+  find_package(ament_cmake_pytest REQUIRED)
+  ament_add_pytest_test(linter_tests test
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+  )
 
-  # 注册 launch_testing 测试
   find_package(launch_testing_ament_cmake REQUIRED)
   add_launch_test(test/test_publisher_rate_launch.py TIMEOUT 40)
+  add_launch_test(test/test_speed_service_launch.py TIMEOUT 40)
+  add_launch_test(test/test_subscriber_lifecycle_launch.py TIMEOUT 40)
 endif()
 ```
 
 - `TIMEOUT 40`: 测试超时时间 40 秒（包括启动节点+收集样本+关闭节点）
+- `ament_add_pytest_test(linter_tests test)`: 运行 test/ 目录下的所有 linter 测试
+- 实际 linter 测试包括：flake8、pep257、copyright
 
 ### package.xml 测试依赖
 ```xml
-<test_depend>ament_lint_auto</test_depend>
-<test_depend>ament_lint_common</test_depend>
+<test_depend>ament_cmake_pytest</test_depend>
+<test_depend>ament_copyright</test_depend>
+<test_depend>ament_flake8</test_depend>
+<test_depend>ament_pep257</test_depend>
+<test_depend>python3-pytest</test_depend>
 <test_depend>launch_testing</test_depend>
 <test_depend>launch_testing_ament_cmake</test_depend>
 <test_depend>launch_ros</test_depend>

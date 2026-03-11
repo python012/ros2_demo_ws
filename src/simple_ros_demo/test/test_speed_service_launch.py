@@ -18,6 +18,8 @@ ROS2 launch_testing integration test for SetSpeed service behavior.
 测试目标：验证 /set_speed 服务的正常响应与异常输入处理。
 """
 
+import os
+import sys
 import time
 import unittest
 
@@ -28,6 +30,30 @@ import launch_testing.actions
 import launch_testing.asserts
 import pytest
 import rclpy
+
+# CRITICAL: Fix Python path BEFORE any other imports to use installed package
+_this_dir = os.path.dirname(os.path.abspath(__file__))
+_pkg_dir = os.path.dirname(os.path.dirname(_this_dir))  # simple_ros_demo/
+_workspace_dir = os.path.dirname(_pkg_dir)  # src/
+# Remove all paths that could shadow the installed package
+_filtered_path = []
+for p in sys.path:
+    if p in ('', _pkg_dir, _workspace_dir, os.path.join(_workspace_dir, 'src')):
+        continue
+    if p.startswith(_pkg_dir + os.sep) and 'simple_ros_demo' in p:
+        continue
+    _filtered_path.append(p)
+# Prepend the installed package location
+_install_base = None
+for p in _filtered_path:
+    if '/local/lib/python' in p and 'dist-packages' in p and 'simple_ros_demo' not in p:
+        _install_base = p
+        break
+if _install_base:
+    _installed_pkg = os.path.join(_install_base, 'simple_ros_demo')
+    if os.path.isdir(_installed_pkg):
+        _filtered_path.insert(0, _installed_pkg)
+sys.path = _filtered_path
 
 SERVICE_TIMEOUT_SEC = 5.0
 CALL_TIMEOUT_SEC = 3.0
@@ -102,7 +128,6 @@ class TestSpeedService(unittest.TestCase):
 
         输入合法速度应成功，超范围应失败。
         """
-        # 延迟导入：避免在 pytest 收集阶段导入未生成的接口
         from simple_ros_demo.srv import SetSpeed
 
         node = rclpy.create_node('set_speed_test_client')

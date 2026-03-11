@@ -12,13 +12,19 @@ find_package(geometry_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 
-# 生成接口
+# Generate interfaces
 rosidl_generate_interfaces(${PROJECT_NAME}
   "simple_ros_demo/srv/SetSpeed.srv"
   DEPENDENCIES geometry_msgs std_srvs
 )
 
-# 安装 Python 脚本
+# Install generated Python interfaces to lib directory (for ros2 run)
+install(DIRECTORY
+  ${CMAKE_BINARY_DIR}/rosidl_generator_py/${PROJECT_NAME}/srv
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+# Install Python scripts
 install(PROGRAMS
   simple_ros_demo/sim_velocity_publisher.py
   simple_ros_demo/velocity_subscriber.py
